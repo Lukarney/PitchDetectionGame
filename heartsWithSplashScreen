@@ -1,0 +1,113 @@
+from cmu_112_graphics import *
+from tkinter import*
+from PIL import Image 
+
+
+class Heart(object):
+    def __init__(self,mode):
+        self.mode=mode
+        # self.x=x
+        # self.y=y
+        self.lives=3
+        heartURL=('https://i.imgur.com/EqQDi3i.png')
+        heart=self.mode.loadImage(heartURL)
+        self.heart=self.mode.scaleImage(heart,1/30)
+
+    def distance(self,x1,y1,x2,y2):
+        return ((x1-x2)**2+(y1-y2)**2)**.5
+
+    #checks if the item contains the point
+    def containsPoint(self,x,y):
+        return self.distance(self.x,self.y,x,y)<25
+
+    def heartCollide(self):
+        heartsToKeep=[]
+        for heart in self.mode.hearts:
+            if heart.containsPoint(self.mode.playerX+self.mode.scrollX,
+                                    self.y):
+                self.lives+=1
+            else:
+                heartsToKeep.append(heart)
+        self.mode.hearts=heartsToKeep
+    
+    #draws the heart that player can get 
+    def draw(self,canvas):
+        # drawX=self.x
+        # drawY=self.y
+        # canvas.create_image(drawX-self.mode.scrollX,drawY,
+        # image=ImageTk.PhotoImage(self.heart))
+        for i in range(self.lives):
+            canvas.create_image(self.mode.app.width-(1+i)*50, 40,
+        image=ImageTk.PhotoImage(self.heart))
+
+class GameMode(Mode):
+    def appStarted(mode):
+        # (mode.boundy0,mode.boundy1)=(mode.height*.7,mode.height)
+        # (mode.boundx0,mode.boundx1)=(mode.scrollMargin*27,mode.width*3.5)
+        # mode.cursor=[-1,-1]
+        # mode.cacti={}
+        # mode.lives=3
+        # #creates enemy cactus in cacti dictionary
+        # for i in range(15):
+        #     randomX=random.randint(mode.boundx0,mode.boundx1)
+        #     #randomX=900
+        #     randomY=random.randint(mode.boundy0,mode.boundy1)
+        #     mode.cacti[(EnemyCactus(mode,randomX,randomY))]=(randomX,randomY
+        mode.heart=Heart(mode)
+        
+    def redrawAll(mode,canvas):
+        mode.heart.draw(canvas)
+
+
+class SplashScreenMode(Mode):
+    def appStarted(mode):
+        urlStartScreen='https://i.imgur.com/psVcn8I.png'
+        mode.bkground1=mode.loadImage(urlStartScreen)
+        mode.snakeIdle='https://i.imgur.com/y6rR0MG.png'
+        spritestrip=mode.loadImage(mode.snakeIdle)
+        spritestrip1=mode.scaleImage(spritestrip,3)
+        mode.sprites=[]
+        #Creates moving sprite images
+        for i in range(10):
+                sprite = spritestrip1.crop(((0+31.8*i)*3, 3*10, 
+                                            3*(31+31.8*i), 3*48))
+                mode.sprites.append(sprite)
+        mode.spriteCounter=0
+    def timerFired(mode):
+        mode.spriteCounter = ((1 + mode.spriteCounter) % len(mode.sprites))
+    #draws snake and background
+    def redrawAll(mode, canvas):
+        canvas.create_image(300, 300,image=ImageTk.PhotoImage(mode.bkground1))
+        #draw sprite
+        sprite = mode.sprites[mode.spriteCounter]
+        #cannot move above a y of 450, (25,450)
+        canvas.create_image(300, 500,
+        image=ImageTk.PhotoImage(sprite))
+    #if any key is pressed the game starts
+    def keyPressed(mode, event):
+        mode.app.setActiveMode(mode.app.gameMode)
+#help mode gives user help on the game
+class HelpMode(Mode):
+    def appStarted(mode):
+        url='https://i.imgur.com/wDuVMcy.png'
+        mode.bkground1=mode.loadImage(url)
+        bkground2=mode.scaleImage(mode.bkground1,2/3)
+    #draws background
+    def redrawAll(mode, canvas):
+        canvas.create_image(300, 300,
+            image=ImageTk.PhotoImage(mode.bkground1))
+    #if any key is pressed the game starts
+    def keyPressed(mode, event):
+        mode.app.setActiveMode(mode.app.gameMode)
+#holds all the game functions
+class MyModalApp(ModalApp):
+    def appStarted(app):
+        #app.splashScreenMode = SplashScreenMode()
+        app.gameMode = GameMode()
+        #app.helpMode = HelpMode()
+        app.setActiveMode(app.gameMode)
+        app.timerDelay = 50
+ 
+def runCreativeSideScroller():
+    MyModalApp(width=600,height=600)
+runCreativeSideScroller()
